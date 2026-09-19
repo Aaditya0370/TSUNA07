@@ -65,15 +65,23 @@ export default function App() {
 
     if (activeVoiceRoomId) {
       setIsVoiceMuted(false);
-      navigator.mediaDevices
-        ?.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-          },
-        })
+      const getAudioStream = async () => {
+        try {
+          return await navigator.mediaDevices?.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+            },
+          });
+        } catch {
+          return await navigator.mediaDevices?.getUserMedia({ audio: true });
+        }
+      };
+
+      getAudioStream()
         .then(async (stream) => {
+          if (!stream) return;
           if (!active) {
             stream.getTracks().forEach((t) => t.stop());
             return;
@@ -85,7 +93,7 @@ export default function App() {
             (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
           const ctx = new AudioCtxClass();
           if (ctx.state === 'suspended') {
-            await ctx.resume();
+            await ctx.resume().catch(() => {});
           }
           voiceAudioCtxRef.current = ctx;
 
@@ -355,7 +363,14 @@ export default function App() {
         const firestoreProfile = await getUserFromFirestore(firebaseUser.uid);
         if (firestoreProfile) {
           setCurrentUser(firestoreProfile);
+          if (firestoreProfile.preferredTheme) {
+            setTheme(firestoreProfile.preferredTheme);
+            try {
+              localStorage.setItem('tsuna_theme', firestoreProfile.preferredTheme);
+            } catch (_) {}
+          }
           try {
+            localStorage.setItem('tsuna_user_profile', JSON.stringify(firestoreProfile));
             await api.updateProfile(firestoreProfile);
           } catch (_) {}
         } else {
@@ -368,7 +383,7 @@ export default function App() {
             id: firebaseUser.uid,
             name: cleanName,
             username: cleanUsername,
-            avatar: firebaseUser.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+            avatar: firebaseUser.photoURL || 'https://api.dicebear.com/7.x/adventurer/svg?seed=TsunaPioneer&backgroundColor=b6e3f4,c0aede,d1d4f9',
             banner: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=1200&auto=format&fit=crop&q=80',
             bio: 'Collaborative builder and creative technologist on Tsuna.',
             roleTitle: 'Creator & Technologist',
@@ -423,6 +438,17 @@ export default function App() {
 
       const activeUser = localUserProfile || serverUser || null;
       setCurrentUser(activeUser);
+      if (activeUser?.preferredTheme) {
+        setTheme(activeUser.preferredTheme);
+        try {
+          localStorage.setItem('tsuna_theme', activeUser.preferredTheme);
+        } catch (_) {}
+      }
+      if (serverUser && !localUserProfile) {
+        try {
+          localStorage.setItem('tsuna_user_profile', JSON.stringify(serverUser));
+        } catch (_) {}
+      }
       setCommunities(comms);
       setPosts(postList);
       setVoiceRooms(vRooms);
@@ -491,12 +517,61 @@ export default function App() {
     }
   };
 
-  const [theme, setTheme] = useState<'dark' | 'high-contrast' | 'light'>('dark');
+  const [theme, setTheme] = useState<'dark' | 'high-contrast' | 'light'>(() => {
+    try {
+      const saved = localStorage.getItem('tsuna_theme');
+      if (saved === 'dark' || saved === 'high-contrast' || saved === 'light') {
+        return saved;
+      }
+    } catch (e) {}
+    return 'dark';
+  });
+
+  // Apply theme to document element and body
+  useEffect(() => {
+    try {
+      localStorage.setItem('tsuna_theme', theme);
+    } catch (e) {}
+
+    document.documentElement.setAttribute('data-theme', theme);
+    if (theme === 'light') {
+      document.documentElement.classList.remove('dark', 'theme-dark', 'theme-high-contrast', 'high-contrast');
+      document.documentElement.classList.add('light', 'theme-light');
+      document.body.classList.remove('dark', 'theme-dark', 'theme-high-contrast', 'high-contrast');
+      document.body.classList.add('light', 'theme-light');
+    } else if (theme === 'high-contrast') {
+      document.documentElement.classList.remove('light', 'theme-light');
+      document.documentElement.classList.add('dark', 'theme-high-contrast', 'high-contrast');
+      document.body.classList.remove('light', 'theme-light');
+      document.body.classList.add('dark', 'theme-high-contrast', 'high-contrast');
+    } else {
+      document.documentElement.classList.remove('light', 'theme-light', 'theme-high-contrast', 'high-contrast');
+      document.documentElement.classList.add('dark', 'theme-dark');
+      document.body.classList.remove('light', 'theme-light', 'theme-high-contrast', 'high-contrast');
+      document.body.classList.add('dark', 'theme-dark');
+    }
+  }, [theme]);
+
+  const handleToggleTheme = (t: 'dark' | 'high-contrast' | 'light') => {
+    setTheme(t);
+    try {
+      localStorage.setItem('tsuna_theme', t);
+    } catch (e) {}
+    if (currentUser) {
+      const updatedUser = { ...currentUser, preferredTheme: t };
+      setCurrentUser(updatedUser);
+      try {
+        localStorage.setItem('tsuna_user_profile', JSON.stringify(updatedUser));
+      } catch (e) {}
+      api.updateProfile({ preferredTheme: t }).catch(() => {});
+      saveUserToFirestore(updatedUser).catch(() => {});
+    }
+  };
 
   const activeVoiceRoom = voiceRooms.find((r) => r.id === activeVoiceRoomId) || null;
 
   return (
-    <div className="min-h-screen bg-black text-neutral-100 selection:bg-neutral-800 selection:text-white flex flex-col font-sans">
+    <div className="min-h-screen bg-black text-neutral-100 selection:bg-neutral-800 selection:text-white flex flex-col font-sans transition-colors duration-200">
       {/* Top Fixed Header with Search and Share Work */}
       <Navbar
         currentUser={currentUser}
@@ -510,7 +585,7 @@ export default function App() {
         }}
         onOpenSearch={() => navigateTo('discover')}
         theme={theme}
-        onToggleTheme={(t) => setTheme(t)}
+        onToggleTheme={handleToggleTheme}
         onNavigate={(tab) => navigateTo(tab)}
         onOpenAuthModal={() => navigateTo('auth')}
         onSignOut={async () => {
@@ -700,6 +775,11 @@ export default function App() {
                     ]);
                     setCurrentUser(user);
                     setPosts(updatedPosts);
+                    if (user) {
+                      try {
+                        localStorage.setItem('tsuna_user_profile', JSON.stringify(user));
+                      } catch (_) {}
+                    }
                   }}
                   onNavigate={(tab) => navigateTo(tab)}
                 />

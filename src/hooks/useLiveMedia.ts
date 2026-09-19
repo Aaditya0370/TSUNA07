@@ -291,21 +291,34 @@ export function useLiveMedia(options: UseLiveMediaOptions = {}): UseLiveMediaRet
           audio: audioConstraints,
         });
       } catch (err) {
-        console.warn('High-spec audio constraints failed, using fallback:', err);
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: targetDeviceId ? { deviceId: { exact: targetDeviceId } } : true,
-        });
+        console.warn('High-spec audio constraints failed, trying target device:', err);
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: targetDeviceId ? { deviceId: { exact: targetDeviceId } } : true,
+          });
+        } catch (err2) {
+          console.warn('Target device audio failed, using basic true audio:', err2);
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+        }
       }
 
       audioStreamRef.current = stream;
       setIsMicOn(true);
       refreshAudioDevices();
 
-      // Initialize Studio Web Audio Context
+      // Initialize Studio Web Audio Context with safe fallback
       const AudioContextClass =
         window.AudioContext ||
         (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-      const ctx = new AudioContextClass({ latencyHint: 'interactive', sampleRate: 48000 });
+      let ctx: AudioContext;
+      try {
+        ctx = new AudioContextClass({ latencyHint: 'interactive', sampleRate: 48000 });
+      } catch {
+        // Fallback for hardware sound cards (44.1kHz or native rate)
+        ctx = new AudioContextClass();
+      }
       if (ctx.state === 'suspended') {
         ctx.resume().catch(() => {});
         const unlock = () => {
@@ -614,14 +627,33 @@ export function useLiveMedia(options: UseLiveMediaOptions = {}): UseLiveMediaRet
         throw new Error('Video camera is not supported in this browser');
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 1920, min: 640 },
-          height: { ideal: 1080, min: 480 },
-          frameRate: { ideal: 60, min: 24 },
-          facingMode: 'user',
-        },
-      });
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 1920, min: 640 },
+            height: { ideal: 1080, min: 480 },
+            frameRate: { ideal: 60, min: 24 },
+            facingMode: 'user',
+          },
+        });
+      } catch (err1) {
+        console.warn('High-spec video constraints failed, trying 720p flexible:', err1);
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              facingMode: 'user',
+            },
+          });
+        } catch (err2) {
+          console.warn('720p video failed, requesting generic video device:', err2);
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+          });
+        }
+      }
 
       videoStreamRef.current = stream;
       setMediaStream(stream);

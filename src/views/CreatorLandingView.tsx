@@ -600,7 +600,7 @@ export const CreatorLandingView: React.FC<CreatorLandingViewProps> = ({
             <div className="flex items-end space-x-4">
               <div className="relative">
                 <img
-                  src={profileUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80'}
+                  src={profileUser?.avatar || 'https://api.dicebear.com/7.x/adventurer/svg?seed=TsunaPioneer&backgroundColor=b6e3f4,c0aede,d1d4f9'}
                   alt={profileUser?.name}
                   className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl object-cover border-4 border-neutral-950 shadow-2xl bg-neutral-900"
                 />

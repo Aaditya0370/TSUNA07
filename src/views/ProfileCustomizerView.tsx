@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import { uploadUserFileToStorage, saveUserToFirestore } from '../services/firebase';
+import { AvatarPicker } from '../components/AvatarPicker';
 
 interface ProfileCustomizerViewProps {
   currentUser: User;
@@ -75,15 +76,6 @@ export const ProfileCustomizerView: React.FC<ProfileCustomizerViewProps> = ({
 
   const avatarFileInputRef = useRef<HTMLInputElement | null>(null);
   const bannerFileInputRef = useRef<HTMLInputElement | null>(null);
-
-  // Avatar presets
-  const avatarPresets = [
-    { name: 'Cyber Wave', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=250&auto=format&fit=crop&q=80' },
-    { name: 'Voxel Punk', url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=250&auto=format&fit=crop&q=80' },
-    { name: 'Neon Glitch', url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=250&auto=format&fit=crop&q=80' },
-    { name: 'Vector Geo', url: `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(username || 'tsuna')}` },
-    { name: 'Bot Sprite', url: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(username || 'robot')}` },
-  ];
 
   // Banner presets
   const bannerPresets = [
@@ -208,11 +200,15 @@ export const ProfileCustomizerView: React.FC<ProfileCustomizerViewProps> = ({
       // 1. Sync through API
       await api.updateProfile(updatedUserPayload);
 
-      // 2. Persist to Firestore
-      await saveUserToFirestore({
+      // 2. Persist to Firestore and local storage permanently
+      const fullUpdated = {
         ...currentUser,
         ...updatedUserPayload,
-      });
+      };
+      await saveUserToFirestore(fullUpdated);
+      try {
+        localStorage.setItem('tsuna_user_profile', JSON.stringify(fullUpdated));
+      } catch (err) {}
 
       setSavedSuccess(true);
       setTimeout(() => {
@@ -375,24 +371,15 @@ export const ProfileCustomizerView: React.FC<ProfileCustomizerViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Presets */}
-                  <div>
-                    <span className="text-[10px] font-mono text-neutral-500 uppercase tracking-wider block mb-2">
-                      Quick Preset Styles:
+                  {/* Cartoon, Anime, Doodle Avatars & Computer Upload */}
+                  <div className="pt-2 border-t border-neutral-800/80">
+                    <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider block mb-2.5">
+                      Choose Cartoon, Anime, or Doodle Avatar:
                     </span>
-                    <div className="flex flex-wrap gap-2">
-                      {avatarPresets.map((preset, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => setAvatar(preset.url)}
-                          className="flex items-center space-x-1.5 rounded-lg border border-neutral-800 bg-black px-2.5 py-1 text-[11px] text-neutral-300 hover:border-emerald-500/50 hover:text-white transition"
-                        >
-                          <img src={preset.url} alt="" className="h-4 w-4 rounded-full object-cover" />
-                          <span>{preset.name}</span>
-                        </button>
-                      ))}
-                    </div>
+                    <AvatarPicker
+                      currentAvatar={avatar}
+                      onSelectAvatar={(selectedUrl) => setAvatar(selectedUrl)}
+                    />
                   </div>
                 </div>
 

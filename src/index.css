@@ -1,21 +1,20 @@
 @import "tailwindcss";
 
 @theme {
-  /* Soft, eye-safe dark theme palette (replaces harsh OLED pitch black & stark white glare) */
-  --color-black: #0e1015;
-  --color-neutral-950: #13161c;
-  --color-neutral-900: #191d25;
-  --color-neutral-800: #232833;
-  --color-neutral-700: #313745;
-  --color-neutral-600: #495264;
-  --color-neutral-500: #6f788b;
-  --color-neutral-400: #98a1b2;
-  --color-neutral-300: #c4c9d5;
-  --color-neutral-200: #dfe3ec;
-  --color-neutral-100: #eef1f6;
-  --color-white: #f3f5f8;
+  --color-black: var(--tsuna-bg-canvas);
+  --color-neutral-950: var(--tsuna-bg-surface);
+  --color-neutral-900: var(--tsuna-bg-card);
+  --color-neutral-800: var(--tsuna-border-dim);
+  --color-neutral-700: var(--tsuna-border-light);
+  --color-neutral-600: var(--tsuna-text-subtle);
+  --color-neutral-500: var(--tsuna-text-muted);
+  --color-neutral-400: var(--tsuna-text-secondary);
+  --color-neutral-300: var(--tsuna-text-primary-soft);
+  --color-neutral-200: var(--tsuna-text-primary-medium);
+  --color-neutral-100: var(--tsuna-text-primary-bright);
+  --color-white: var(--tsuna-text-highlight);
 
-  /* Softer, more pleasant accents that do not cause neon glare */
+  /* Softer, more pleasant accents */
   --color-emerald-400: #34d399;
   --color-emerald-500: #10b981;
   --color-amber-400: #fbbf24;
@@ -24,6 +23,66 @@
 }
 
 @layer base {
+  :root,
+  [data-theme="dark"],
+  .theme-dark,
+  .dark {
+    --tsuna-bg-canvas: #0e1015;
+    --tsuna-bg-surface: #13161c;
+    --tsuna-bg-card: #191d25;
+    --tsuna-border-dim: #232833;
+    --tsuna-border-light: #313745;
+    --tsuna-text-subtle: #495264;
+    --tsuna-text-muted: #6f788b;
+    --tsuna-text-secondary: #98a1b2;
+    --tsuna-text-primary-soft: #c4c9d5;
+    --tsuna-text-primary-medium: #dfe3ec;
+    --tsuna-text-primary-bright: #eef1f6;
+    --tsuna-text-highlight: #f3f5f8;
+    --tsuna-outline-stroke: rgba(243, 245, 248, 0.7);
+    --tsuna-chat-bg-pattern: rgba(243, 245, 248, 0.035);
+    color-scheme: dark;
+  }
+
+  [data-theme="light"],
+  .theme-light,
+  .light {
+    --tsuna-bg-canvas: #f8fafc;
+    --tsuna-bg-surface: #ffffff;
+    --tsuna-bg-card: #ffffff;
+    --tsuna-border-dim: #e2e8f0;
+    --tsuna-border-light: #cbd5e1;
+    --tsuna-text-subtle: #94a3b8;
+    --tsuna-text-muted: #64748b;
+    --tsuna-text-secondary: #475569;
+    --tsuna-text-primary-soft: #334155;
+    --tsuna-text-primary-medium: #1e293b;
+    --tsuna-text-primary-bright: #0f172a;
+    --tsuna-text-highlight: #0f172a;
+    --tsuna-outline-stroke: rgba(15, 23, 42, 0.75);
+    --tsuna-chat-bg-pattern: rgba(15, 23, 42, 0.04);
+    color-scheme: light;
+  }
+
+  [data-theme="high-contrast"],
+  .theme-high-contrast {
+    --tsuna-bg-canvas: #000000;
+    --tsuna-bg-surface: #060608;
+    --tsuna-bg-card: #0d0e12;
+    --tsuna-border-dim: #3a414f;
+    --tsuna-border-light: #586378;
+    --tsuna-text-subtle: #79859c;
+    --tsuna-text-muted: #a3adc2;
+    --tsuna-text-secondary: #cbd3e3;
+    --tsuna-text-primary-soft: #e5eaf2;
+    --tsuna-text-primary-medium: #f4f6fa;
+    --tsuna-text-primary-bright: #ffffff;
+    --tsuna-text-highlight: #ffffff;
+    --tsuna-outline-stroke: rgba(255, 255, 255, 0.9);
+    --tsuna-chat-bg-pattern: rgba(255, 255, 255, 0.06);
+    color-scheme: dark;
+  }
+
   :root {
     --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
@@ -31,59 +90,60 @@
 
   body {
     font-family: var(--font-sans);
-    background-color: #0e1015;
-    color: #f3f5f8;
+    background-color: var(--tsuna-bg-canvas);
+    color: var(--tsuna-text-primary-bright);
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
-  /* Softened outline text for headers without glaring halos */
+  /* Outline text for headers without glaring halos */
   .hero-outline-text {
-    color: #0e1015;
-    -webkit-text-stroke: 1.5px rgba(243, 245, 248, 0.7);
-    text-shadow: 0 0 20px rgba(243, 245, 248, 0.08);
+    color: var(--tsuna-bg-canvas);
+    -webkit-text-stroke: 1.5px var(--tsuna-outline-stroke);
+    text-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
   }
 
-  /* Softer, non-intrusive scrollbars */
+  /* Smooth scrollbars */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #0e1015;
+    background: var(--tsuna-bg-canvas);
   }
   ::-webkit-scrollbar-thumb {
-    background: #232833;
+    background: var(--tsuna-border-dim);
     border-radius: 4px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #313745;
+    background: var(--tsuna-border-light);
   }
 }
 
 /* Chat background textures with gentle, low-contrast patterns */
 .chat-bg-default {
-  background-color: #11141a;
-  background-image: radial-gradient(rgba(243, 245, 248, 0.035) 1px, transparent 0);
+  background-color: var(--tsuna-bg-surface);
+  background-image: radial-gradient(var(--tsuna-chat-bg-pattern) 1px, transparent 0);
   background-size: 24px 24px;
 }
 
 .chat-bg-obsidian {
-  background-color: #0e1015;
-  background-image: linear-gradient(180deg, #13161c 0%, #0e1015 100%);
+  background-color: var(--tsuna-bg-canvas);
+  background-image: linear-gradient(180deg, var(--tsuna-bg-surface) 0%, var(--tsuna-bg-canvas) 100%);
 }
 
 .chat-bg-charcoal {
-  background-color: #13161c;
-  background-image: radial-gradient(#232833 1px, transparent 1px);
+  background-color: var(--tsuna-bg-surface);
+  background-image: radial-gradient(var(--tsuna-border-dim) 1px, transparent 1px);
   background-size: 16px 16px;
 }
 
 .chat-bg-mono-grid {
-  background-color: #0e1015;
+  background-color: var(--tsuna-bg-canvas);
   background-image: 
-    linear-gradient(to right, rgba(243, 245, 248, 0.025) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(243, 245, 248, 0.025) 1px, transparent 1px);
+    linear-gradient(to right, var(--tsuna-chat-bg-pattern) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--tsuna-chat-bg-pattern) 1px, transparent 1px);
   background-size: 20px 20px;
 }

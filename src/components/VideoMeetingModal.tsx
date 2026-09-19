@@ -90,7 +90,7 @@ export const VideoMeetingModal: React.FC<VideoMeetingModalProps> = ({
       id: currentUser?.id || 'me',
       name: `${currentUser?.name || 'You'} (You)`,
       role: currentUser?.roleTitle || 'Builder',
-      avatar: currentUser?.avatar,
+      avatar: currentUser?.avatar || 'https://api.dicebear.com/7.x/adventurer/svg?seed=TsunaCreator&backgroundColor=b6e3f4,c0aede,d1d4f9',
       isSpeaking: isMicOn && isSpeaking,
       isSelf: true,
       hasVideo: isCamOn || isScreenSharing,

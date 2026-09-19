@@ -18,6 +18,7 @@ import {
   MessageSquare,
   Calendar,
   Zap,
+  Check,
 } from 'lucide-react';
 import { User, TsunaNotification } from '../types';
 
@@ -286,56 +287,74 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => setShowThemeMenu(!showThemeMenu)}
               id="navbar-theme-toggle-btn"
               className="flex h-8 w-8 items-center justify-center rounded-xl border border-neutral-800 bg-neutral-950 text-neutral-400 transition hover:border-neutral-700 hover:text-white"
-              title="Interface theme"
+              title={`Current Theme: ${theme === 'light' ? 'Clean Light' : theme === 'high-contrast' ? 'High Contrast' : 'Dark (Default)'}`}
             >
               {theme === 'dark' ? (
-                <Moon className="h-3.5 w-3.5" />
+                <Moon className="h-3.5 w-3.5 text-neutral-200" />
               ) : theme === 'high-contrast' ? (
-                <Contrast className="h-3.5 w-3.5" />
+                <Contrast className="h-3.5 w-3.5 text-white" />
               ) : (
-                <Sun className="h-3.5 w-3.5" />
+                <Sun className="h-3.5 w-3.5 text-amber-500" />
               )}
             </button>
 
             {showThemeMenu && (
-              <div className="absolute right-0 mt-2 w-44 rounded-xl border border-neutral-800 bg-neutral-950 p-1.5 shadow-2xl z-50">
-                <button
-                  onClick={() => {
-                    onToggleTheme('dark');
-                    setShowThemeMenu(false);
-                  }}
-                  className={`flex w-full items-center space-x-2 rounded-lg px-2.5 py-1.5 text-xs ${
-                    theme === 'dark' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:text-white'
-                  }`}
-                >
-                  <Moon className="h-3.5 w-3.5" />
-                  <span>Dark (Default)</span>
-                </button>
-                <button
-                  onClick={() => {
-                    onToggleTheme('high-contrast');
-                    setShowThemeMenu(false);
-                  }}
-                  className={`flex w-full items-center space-x-2 rounded-lg px-2.5 py-1.5 text-xs ${
-                    theme === 'high-contrast' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:text-white'
-                  }`}
-                >
-                  <Contrast className="h-3.5 w-3.5" />
-                  <span>High Contrast</span>
-                </button>
-                <button
-                  onClick={() => {
-                    onToggleTheme('light');
-                    setShowThemeMenu(false);
-                  }}
-                  className={`flex w-full items-center space-x-2 rounded-lg px-2.5 py-1.5 text-xs ${
-                    theme === 'light' ? 'bg-neutral-800 text-white' : 'text-neutral-400 hover:text-white'
-                  }`}
-                >
-                  <Sun className="h-3.5 w-3.5" />
-                  <span>Clean Light</span>
-                </button>
-              </div>
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowThemeMenu(false)}
+                />
+                <div className="absolute right-0 mt-2 w-48 rounded-xl border border-neutral-800 bg-neutral-950 p-1.5 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-neutral-500 border-b border-neutral-800/80 mb-1">
+                    Interface Theme
+                  </div>
+                  <button
+                    onClick={() => {
+                      onToggleTheme('dark');
+                      setShowThemeMenu(false);
+                    }}
+                    className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs transition ${
+                      theme === 'dark' ? 'bg-neutral-800 text-white font-medium' : 'text-neutral-400 hover:text-white hover:bg-neutral-900'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Moon className="h-3.5 w-3.5" />
+                      <span>Dark (Default)</span>
+                    </div>
+                    {theme === 'dark' && <Check className="h-3.5 w-3.5 text-emerald-400" />}
+                  </button>
+                  <button
+                    onClick={() => {
+                      onToggleTheme('high-contrast');
+                      setShowThemeMenu(false);
+                    }}
+                    className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs transition ${
+                      theme === 'high-contrast' ? 'bg-neutral-800 text-white font-medium' : 'text-neutral-400 hover:text-white hover:bg-neutral-900'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Contrast className="h-3.5 w-3.5" />
+                      <span>High Contrast</span>
+                    </div>
+                    {theme === 'high-contrast' && <Check className="h-3.5 w-3.5 text-emerald-400" />}
+                  </button>
+                  <button
+                    onClick={() => {
+                      onToggleTheme('light');
+                      setShowThemeMenu(false);
+                    }}
+                    className={`flex w-full items-center justify-between rounded-lg px-2.5 py-1.5 text-xs transition ${
+                      theme === 'light' ? 'bg-neutral-800 text-white font-medium' : 'text-neutral-400 hover:text-white hover:bg-neutral-900'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Sun className="h-3.5 w-3.5 text-amber-500" />
+                      <span>Clean Light</span>
+                    </div>
+                    {theme === 'light' && <Check className="h-3.5 w-3.5 text-emerald-400" />}
+                  </button>
+                </div>
+              </>
             )}
           </div>
 

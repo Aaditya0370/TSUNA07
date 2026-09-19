@@ -54,38 +54,7 @@ export const FlowsView: React.FC<FlowsViewProps> = ({ currentUser, onOpenShareMo
   const [newCommentText, setNewCommentText] = useState('');
   const [localComments, setLocalComments] = useState<
     { id: string; author: User; text: string; createdAt: string }[]
-  >([
-    {
-      id: 'c1',
-      author: {
-        id: 'usr_sarah',
-        name: 'Sarah Chen',
-        username: 'schen_dev',
-        roleTitle: 'Graphics Programmer',
-        avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-        bio: 'Shaders & WebGL',
-        skills: ['WebGPU', 'Rust'],
-        isOnline: true,
-      },
-      text: 'The curl noise vector formulation in WGSL runs at a locked 120 FPS on Apple Silicon. Elegant buffer management!',
-      createdAt: '1 hour ago',
-    },
-    {
-      id: 'c2',
-      author: {
-        id: 'usr_marcus_v',
-        name: 'Marcus Vance',
-        username: 'marcus_v',
-        roleTitle: 'Systems Architect',
-        avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-        bio: 'Rust & Distributed Systems',
-        skills: ['Rust', 'Distributed Systems'],
-        isOnline: true,
-      },
-      text: 'Great breakdown. Any benchmarks on memory bus bandwidth under ping-pong buffer contention?',
-      createdAt: '35 mins ago',
-    },
-  ]);
+  >([]);
 
   // Publish new flow modal
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);

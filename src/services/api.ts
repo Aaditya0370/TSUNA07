@@ -347,4 +347,66 @@ export const api = {
       creators: User[];
     }>(`/api/search?${params.toString()}`);
   },
+
+  // 50 Feed Preferences & Customization API
+  getPreferencesCatalog: () =>
+    fetchJSON<{
+      categories: { id: string; name: string; icon: string }[];
+      preferences: any[];
+      presets: any[];
+      totalCount: number;
+    }>('/api/preferences'),
+
+  getUserPreferences: () =>
+    fetchJSON<{
+      preferences: string[];
+      feedTuning: any;
+    }>('/api/user/preferences'),
+
+  saveUserPreferences: (payload: { preferences?: string[]; feedTuning?: any }) =>
+    fetchJSON<{
+      success: boolean;
+      preferences: string[];
+      feedTuning: any;
+    }>('/api/user/preferences', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  rankFeed: (payload: {
+    mode?: 'for_you' | 'following' | 'latest';
+    activePreferences?: string[];
+    feedTuning?: any;
+  }) =>
+    fetchJSON<Post[]>('/api/feed/ai-rank', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  getCreatorSuggestions: () =>
+    fetchJSON<
+      {
+        user: User;
+        matchScore: number;
+        mutualsCount: number;
+        matchedTopics: string[];
+        reason: string;
+      }[]
+    >('/api/users/suggestions'),
+
+  searchProfiles: (query: string) =>
+    fetchJSON<
+      {
+        user: User;
+        mutualsCount: number;
+        isFollowing: boolean;
+        matchHighlights: string[];
+      }[]
+    >(`/api/users/search?q=${encodeURIComponent(query)}`),
+
+  sendFeedFeedback: (tag: string, action: 'boost' | 'reduce') =>
+    fetchJSON<{ success: boolean; feedTuning: any }>('/api/feed/feedback', {
+      method: 'POST',
+      body: JSON.stringify({ tag, action }),
+    }),
 };

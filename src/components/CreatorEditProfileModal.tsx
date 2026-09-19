@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
-import { X, Check, Save, Sparkles, Plus, Trash2, Globe, Github, Twitter } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Check, Save, Sparkles, Plus, Trash2, Globe, Github, Twitter, Upload, Image as ImageIcon } from 'lucide-react';
 import { User } from '../types';
 import { api } from '../services/api';
+import { saveUserToFirestore } from '../services/firebase';
 import { sounds } from '../utils/audio';
+import { AvatarPicker } from './AvatarPicker';
+import { readFileFromComputer } from '../utils/fileUpload';
 
 interface CreatorEditProfileModalProps {
   user: User;
@@ -64,6 +67,14 @@ export const CreatorEditProfileModal: React.FC<CreatorEditProfileModalProps> = (
           website: website.trim(),
         },
       });
+
+      // Persist permanently to local storage & Firestore
+      try {
+        localStorage.setItem('tsuna_user_profile', JSON.stringify(updated));
+        await saveUserToFirestore(updated);
+      } catch (e) {
+        console.warn('Could not sync user to Firestore/storage:', e);
+      }
 
       sounds.playSuccess();
       onSaved(updated);
@@ -213,28 +224,46 @@ export const CreatorEditProfileModal: React.FC<CreatorEditProfileModalProps> = (
             </div>
           </div>
 
-          {/* Avatar & Banner URLs */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-neutral-900">
-            <div>
-              <label className="block text-xs font-mono text-neutral-400 mb-1">Avatar Image URL</label>
-              <input
-                type="url"
-                value={avatar}
-                onChange={(e) => setAvatar(e.target.value)}
-                placeholder="https://..."
-                className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-3 py-2 text-xs text-white focus:border-emerald-400 focus:outline-none"
-              />
+          {/* Avatar Selection: Cartoon, Anime, Doodle & Computer Upload */}
+          <div className="space-y-2 pt-2 border-t border-neutral-900">
+            <label className="block text-xs font-mono text-neutral-400">
+              Avatar (Choose Cartoon, Anime, Doodle, or Upload from Computer)
+            </label>
+            <AvatarPicker
+              currentAvatar={avatar}
+              onSelectAvatar={(newUrl) => setAvatar(newUrl)}
+            />
+          </div>
+
+          {/* Banner URL & Computer Upload */}
+          <div className="space-y-2 pt-2 border-t border-neutral-900">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-mono text-neutral-400">Banner Cover Image</label>
+              <label className="cursor-pointer flex items-center space-x-1.5 text-xs text-emerald-400 hover:text-emerald-300">
+                <Upload className="h-3.5 w-3.5" />
+                <span>Upload Banner from Computer</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const processed = await readFileFromComputer(file);
+                      setBanner(processed.dataUrl);
+                      sounds.playSuccess();
+                    }
+                  }}
+                />
+              </label>
             </div>
-            <div>
-              <label className="block text-xs font-mono text-neutral-400 mb-1">Banner Image URL</label>
-              <input
-                type="url"
-                value={banner}
-                onChange={(e) => setBanner(e.target.value)}
-                placeholder="https://..."
-                className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-3 py-2 text-xs text-white focus:border-emerald-400 focus:outline-none"
-              />
-            </div>
+            <input
+              type="url"
+              value={banner}
+              onChange={(e) => setBanner(e.target.value)}
+              placeholder="Paste banner image URL or upload from computer..."
+              className="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-3 py-2 text-xs text-white focus:border-emerald-400 focus:outline-none"
+            />
           </div>
 
           {/* Submit */}

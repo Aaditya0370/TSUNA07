@@ -8,15 +8,25 @@ export function triggerFileDownload(
   mimeType: string = 'text/plain'
 ) {
   try {
-    const blob = new Blob([content], { type: mimeType });
-    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = filename || 'download.txt';
+    a.download = filename || 'download';
+
+    if (content.startsWith('data:') || content.startsWith('blob:') || content.startsWith('http')) {
+      a.href = content;
+    } else {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      a.href = url;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      return;
+    }
+
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
   } catch (err) {
     console.error('Failed to trigger download:', err);
   }

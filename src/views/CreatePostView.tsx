@@ -263,7 +263,7 @@ export function applyCRTFilter(gl: WebGLRenderingContext) {
       id: 'preview_author',
       name: 'You (Preview)',
       username: 'you',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+      avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=AstroCadet&backgroundColor=b6e3f4,c0aede,d1d4f9',
       roleTitle: 'Creative Builder',
       skills: ['TypeScript', 'WebGL'],
       bio: 'Building on Tsuna',

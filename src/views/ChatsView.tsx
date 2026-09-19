@@ -19,9 +19,13 @@ import {
   Search,
   CheckCheck,
   Sparkles,
+  Image as ImageIcon,
+  X,
+  Upload,
 } from 'lucide-react';
 import { api } from '../services/api';
 import { triggerFileDownload } from '../utils/download';
+import { readFileFromComputer, ProcessedFile } from '../utils/fileUpload';
 
 interface ChatsViewProps {
   currentUser: User | null;
@@ -52,6 +56,8 @@ export const ChatsView: React.FC<ChatsViewProps> = ({
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [activeTheme, setActiveTheme] = useState<string>('default');
   const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
+  const [chatAttachment, setChatAttachment] = useState<ProcessedFile | null>(null);
+  const chatFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -143,7 +149,7 @@ export const ChatsView: React.FC<ChatsViewProps> = ({
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!messageText.trim() && !codeSnippetContent.trim()) return;
+    if (!messageText.trim() && !codeSnippetContent.trim() && !chatAttachment) return;
 
     try {
       const payload: any = {
@@ -157,10 +163,24 @@ export const ChatsView: React.FC<ChatsViewProps> = ({
         };
       }
 
+      if (chatAttachment) {
+        payload.attachment = {
+          id: 'att_' + Date.now(),
+          name: chatAttachment.name,
+          size: chatAttachment.size,
+          type: chatAttachment.type,
+          url: chatAttachment.dataUrl,
+        };
+        if (chatAttachment.type.startsWith('image/')) {
+          payload.image = chatAttachment.dataUrl;
+        }
+      }
+
       const sent = await api.sendMessage(activeConversationId, payload);
       setMessages((prev) => [...prev, sent]);
       setMessageText('');
       setCodeSnippetContent('');
+      setChatAttachment(null);
       setShowCodeComposer(false);
 
       // Refresh conversations list to update last message preview
@@ -272,7 +292,7 @@ export const ChatsView: React.FC<ChatsViewProps> = ({
                 >
                   <div className="relative shrink-0">
                     <img
-                      src={conv.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'}
+                      src={conv.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${conv.id}&backgroundColor=b6e3f4,c0aede`}
                       alt={conv.name}
                       className="h-9 w-9 rounded-xl object-cover border border-neutral-800"
                     />
@@ -432,6 +452,18 @@ export const ChatsView: React.FC<ChatsViewProps> = ({
                       </div>
                     )}
 
+                    {/* Image in Chat */}
+                    {msg.image && (
+                      <div className="mt-2 overflow-hidden rounded-xl border border-neutral-800 bg-black/40">
+                        <img
+                          src={msg.image}
+                          alt="Uploaded attachment"
+                          className="max-h-64 max-w-full rounded-lg object-contain cursor-pointer"
+                          onClick={() => window.open(msg.image, '_blank')}
+                        />
+                      </div>
+                    )}
+
                     {/* Attachment in Chat */}
                     {msg.attachment && (
                       <div className="mt-2 flex items-center justify-between rounded-lg border border-neutral-800 bg-black/60 p-2.5">
@@ -444,7 +476,7 @@ export const ChatsView: React.FC<ChatsViewProps> = ({
                           onClick={() => {
                             triggerFileDownload(
                               msg.attachment?.name || 'chat_attachment.txt',
-                              `Tsuna Chat Attachment: ${msg.attachment?.name || 'File'}\nSize: ${msg.attachment?.size || 'N/A'}`
+                              msg.attachment?.url || `Tsuna Chat Attachment: ${msg.attachment?.name || 'File'}\nSize: ${msg.attachment?.size || 'N/A'}`
                             );
                           }}
                           className="rounded bg-neutral-900 px-2 py-0.5 text-[10px] text-white hover:bg-neutral-800 cursor-pointer transition"
@@ -512,6 +544,28 @@ export const ChatsView: React.FC<ChatsViewProps> = ({
               </div>
             )}
 
+            {/* Chat Attachment Preview Chip */}
+            {chatAttachment && (
+              <div className="mb-2 flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-950/20 px-3 py-2 text-xs">
+                <div className="flex items-center space-x-2 truncate">
+                  {chatAttachment.type.startsWith('image/') ? (
+                    <img src={chatAttachment.dataUrl} alt="" className="h-6 w-6 rounded object-cover border border-emerald-500/40" />
+                  ) : (
+                    <Paperclip className="h-4 w-4 text-emerald-400" />
+                  )}
+                  <span className="truncate font-mono text-emerald-200">{chatAttachment.name}</span>
+                  <span className="text-[10px] text-emerald-400/80 font-mono">({chatAttachment.size})</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setChatAttachment(null)}
+                  className="rounded-md p-1 text-neutral-400 hover:text-white hover:bg-neutral-800 transition"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+
             <form onSubmit={handleSendMessage} className="flex items-center space-x-2">
               <button
                 type="button"
@@ -526,13 +580,26 @@ export const ChatsView: React.FC<ChatsViewProps> = ({
                 <Code2 className="h-4 w-4" />
               </button>
 
+              {/* Hidden file input for uploading from computer */}
+              <input
+                ref={chatFileInputRef}
+                type="file"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const processed = await readFileFromComputer(file);
+                    setChatAttachment(processed);
+                    e.target.value = '';
+                  }
+                }}
+              />
+
               <button
                 type="button"
-                onClick={() => {
-                  setMessageText((prev) => prev ? `${prev} [Attachment: engine_spec.json]` : '[Attachment: engine_spec.json]');
-                }}
+                onClick={() => chatFileInputRef.current?.click()}
                 className="rounded-lg p-2 text-neutral-400 hover:bg-neutral-900 hover:text-white transition"
-                title="Attach file"
+                title="Upload file or image from computer"
               >
                 <Paperclip className="h-4 w-4" />
               </button>
@@ -547,8 +614,8 @@ export const ChatsView: React.FC<ChatsViewProps> = ({
 
               <button
                 type="submit"
-                disabled={!messageText.trim() && !codeSnippetContent.trim()}
-                className="rounded-xl bg-white p-2 text-black hover:bg-neutral-200 transition disabled:opacity-40"
+                disabled={!messageText.trim() && !codeSnippetContent.trim() && !chatAttachment}
+                className="rounded-xl bg-white p-2 text-black hover:bg-neutral-200 transition disabled:opacity-40 cursor-pointer"
               >
                 <Send className="h-4 w-4" />
               </button>

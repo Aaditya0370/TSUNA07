@@ -44,41 +44,7 @@ interface ProfileViewProps {
   onNavigate?: (tab: string) => void;
 }
 
-// Curated avatar presets with high-resolution developer and creative aesthetics
-const PRESET_AVATARS = [
-  {
-    name: 'Cyberpunk Shader',
-    url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Systems Architect',
-    url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Minimal Monolith',
-    url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Generative Coder',
-    url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'WebGPU Engineer',
-    url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Sound Architect',
-    url: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=400&auto=format&fit=crop&q=80',
-  },
-  {
-    name: '3D Raymarcher',
-    url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fit=crop&q=80',
-  },
-  {
-    name: 'Creative Technologist',
-    url: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=400&auto=format&fit=crop&q=80',
-  },
-];
+import { AVATAR_PRESETS } from '../data/avatarPresets';
 
 // Curated banner presets
 const PRESET_BANNERS = [
@@ -334,11 +300,15 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
       };
 
       await api.updateProfile(updatedUserPayload);
-      // Synchronize to Google Firestore under this particular user ID
-      await saveUserToFirestore({
+      const fullUpdated = {
         ...currentUser,
         ...updatedUserPayload,
-      });
+      };
+      // Synchronize to Google Firestore and local storage permanently
+      await saveUserToFirestore(fullUpdated);
+      try {
+        localStorage.setItem('tsuna_user_profile', JSON.stringify(fullUpdated));
+      } catch (err) {}
 
       setSaveSuccessNotice(true);
       setTimeout(() => setSaveSuccessNotice(false), 3000);

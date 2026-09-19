@@ -35,6 +35,16 @@ export interface User {
   isFollowing?: boolean;
   followingIds?: string[];
   savedFlowIds?: string[];
+  preferredTheme?: 'dark' | 'high-contrast' | 'light';
+  preferences?: string[]; // Array of selected preference IDs from the 50 preferences
+  feedTuning?: {
+    codeWeight?: number; // 0 to 100
+    mediaWeight?: number; // 0 to 100
+    discussionWeight?: number; // 0 to 100
+    exploreVsFollowing?: 'balanced' | 'mostly_following' | 'mostly_explore';
+    boostedTags?: string[];
+    penalizedTags?: string[];
+  };
 }
 
 export type CommunityRole = 'Owner' | 'Admin' | 'Moderator' | 'Member';
@@ -124,6 +134,10 @@ export interface Post {
   commentsCount: number;
   createdAt: string;
   tags: string[];
+  aiMatchScore?: number; // 0 - 100 percentage match
+  aiReason?: string; // e.g. "96% Match • Based on your interest in WebGPU & Shaders"
+  matchedPreferences?: string[];
+  authorMutualsCount?: number;
 }
 
 export interface Comment {

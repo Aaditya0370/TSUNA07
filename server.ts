@@ -3,12 +3,36 @@ import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import { db } from './server/db';
 import { User, Post, Comment, ChatMessage, ChatConversation, TsunaEvent, EventSubmission, EventFileAttachment, VoiceRoom, Flow, Community, TsunaNotification, CommunityQuestion, QuestionAnswer } from './src/types';
+import { rankFeed, getCreatorSuggestions, searchUserProfiles } from './server/feedAiRanker';
+import { ELABORATE_50_FEED_PREFERENCES, FEED_CATEGORIES, PRESET_CURATIONS } from './src/data/feedPreferences';
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+  // File and Image Upload Endpoint for Computer Uploads
+  app.post('/api/upload', (req, res) => {
+    try {
+      const { name, type, size, dataUrl } = req.body;
+      if (!dataUrl) {
+        return res.status(400).json({ error: 'Missing dataUrl payload' });
+      }
+      // Return file reference
+      res.json({
+        success: true,
+        name: name || 'file',
+        type: type || 'application/octet-stream',
+        size: size || 'N/A',
+        url: dataUrl,
+      });
+    } catch (err) {
+      console.error('Upload handler error:', err);
+      res.status(500).json({ error: 'Failed to process file upload' });
+    }
+  });
 
   // Health check
   app.get('/api/health', (req, res) => {
@@ -495,7 +519,172 @@ async function startServer() {
     res.json(updated);
   });
 
-  // Communities
+  // ==========================================
+  // FEED CUSTOMIZATION & 50 PREFERENCES SYSTEM
+  // ==========================================
+
+  // Catalog of 50 Elaborate Feed Preferences
+  app.get('/api/preferences', (req, res) => {
+    res.json({
+      categories: FEED_CATEGORIES,
+      preferences: ELABORATE_50_FEED_PREFERENCES,
+      presets: PRESET_CURATIONS,
+      totalCount: ELABORATE_50_FEED_PREFERENCES.length,
+    });
+  });
+
+  // Get current user feed customization state
+  app.get('/api/user/preferences', (req, res) => {
+    const state = db.getState();
+    const actor = getActorUser(state);
+    res.json({
+      preferences: actor?.preferences || [],
+      feedTuning: actor?.feedTuning || {
+        codeWeight: 80,
+        mediaWeight: 75,
+        discussionWeight: 65,
+        exploreVsFollowing: 'balanced',
+        boostedTags: [],
+        penalizedTags: [],
+      },
+    });
+  });
+
+  // Update current user feed customization preferences
+  app.post('/api/user/preferences', (req, res) => {
+    const { preferences, feedTuning } = req.body;
+    const state = db.getState();
+    const actor = getActorUser(state);
+
+    if (Array.isArray(preferences)) {
+      actor.preferences = preferences;
+    }
+    if (feedTuning && typeof feedTuning === 'object') {
+      actor.feedTuning = {
+        ...(actor.feedTuning || {}),
+        ...feedTuning,
+      };
+    }
+
+    // Persist in state.users
+    const idx = state.users.findIndex((u) => u.id === actor.id);
+    if (idx !== -1) {
+      state.users[idx] = actor;
+    } else {
+      state.users.push(actor);
+    }
+    if (state.currentUser && state.currentUser.id === actor.id) {
+      state.currentUser = actor;
+    }
+
+    db.save();
+    res.json({
+      success: true,
+      preferences: actor.preferences,
+      feedTuning: actor.feedTuning,
+    });
+  });
+
+  // Instagram/Facebook-style multi-signal AI feed ranking
+  app.post('/api/feed/ai-rank', async (req, res) => {
+    try {
+      const { mode, activePreferences, feedTuning } = req.body;
+      const state = db.getState();
+      const actor = getActorUser(state);
+
+      const ranked = await rankFeed(
+        {
+          posts: state.posts,
+          currentUser: actor,
+          mode: mode || 'for_you',
+          activePreferences,
+          feedTuning,
+        },
+        state.users
+      );
+
+      res.json(ranked);
+    } catch (err) {
+      console.error('Error ranking feed:', err);
+      res.status(500).json({ error: 'Failed to rank feed' });
+    }
+  });
+
+  // Follow suggestions based on 50 preferences & mutual connections
+  app.get('/api/users/suggestions', (req, res) => {
+    try {
+      const state = db.getState();
+      const actor = getActorUser(state);
+      const suggestions = getCreatorSuggestions(actor, state.users, state.posts);
+      res.json(suggestions);
+    } catch (err) {
+      console.error('Error generating creator suggestions:', err);
+      res.status(500).json({ error: 'Failed to get suggestions' });
+    }
+  });
+
+  // Search profiles section
+  app.get('/api/users/search', (req, res) => {
+    try {
+      const query = (req.query.q as string) || '';
+      const state = db.getState();
+      const actor = getActorUser(state);
+      const results = searchUserProfiles(query, actor, state.users);
+      res.json(results);
+    } catch (err) {
+      console.error('Error searching profiles:', err);
+      res.status(500).json({ error: 'Failed to search profiles' });
+    }
+  });
+
+  // Post feedback signal: "Show more like this" or "Show less like this"
+  app.post('/api/feed/feedback', (req, res) => {
+    try {
+      const { tag, action } = req.body; // action: 'boost' | 'reduce'
+      if (!tag) {
+        return res.status(400).json({ error: 'Missing tag' });
+      }
+      const state = db.getState();
+      const actor = getActorUser(state);
+      const tuning = actor.feedTuning || {
+        codeWeight: 80,
+        mediaWeight: 75,
+        discussionWeight: 65,
+        boostedTags: [],
+        penalizedTags: [],
+      };
+
+      const cleanTag = tag.replace(/^#/, '').toLowerCase();
+      let boosted = new Set((tuning.boostedTags || []).map((t) => t.toLowerCase()));
+      let penalized = new Set((tuning.penalizedTags || []).map((t) => t.toLowerCase()));
+
+      if (action === 'boost') {
+        boosted.add(cleanTag);
+        penalized.delete(cleanTag);
+      } else if (action === 'reduce') {
+        penalized.add(cleanTag);
+        boosted.delete(cleanTag);
+      }
+
+      tuning.boostedTags = Array.from(boosted);
+      tuning.penalizedTags = Array.from(penalized);
+      actor.feedTuning = tuning;
+
+      const idx = state.users.findIndex((u) => u.id === actor.id);
+      if (idx !== -1) {
+        state.users[idx] = actor;
+      }
+      if (state.currentUser && state.currentUser.id === actor.id) {
+        state.currentUser = actor;
+      }
+      db.save();
+
+      res.json({ success: true, feedTuning: tuning });
+    } catch (err) {
+      console.error('Error updating feed feedback:', err);
+      res.status(500).json({ error: 'Failed to update feedback' });
+    }
+  });
   app.get('/api/communities', (req, res) => {
     const state = db.getState();
     res.json(state.communities);
@@ -512,7 +701,7 @@ async function startServer() {
   });
 
   app.post('/api/communities', (req, res) => {
-    const { name, tagline, description, category, tags } = req.body;
+    const { name, tagline, description, category, tags, avatar, banner } = req.body;
     const state = db.getState();
     const slug = (name || 'community').toLowerCase().replace(/[^a-z0-9]+/g, '-');
     const newComm: Community = {
@@ -521,8 +710,8 @@ async function startServer() {
       slug,
       tagline: tagline || 'A collective space for building together.',
       description: description || 'Community focused on collaborative projects.',
-      avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80',
-      banner: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=1200&auto=format&fit=crop&q=80',
+      avatar: avatar || `https://api.dicebear.com/7.x/shapes/svg?seed=${slug}`,
+      banner: banner || 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=1200&auto=format&fit=crop&q=80',
       category: category || 'Engineering',
       membersCount: 1,
       activeBuildingCount: 1,
