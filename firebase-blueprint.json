@@ -1,0 +1,84 @@
+{
+  "entities": {
+    "users": {
+      "title": "User Profile",
+      "description": "User account profiles with custom PFP, banner, status, and developer details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "username": { "type": "string" },
+        "email": { "type": "string" },
+        "avatar": { "type": "string" },
+        "banner": { "type": "string" },
+        "bio": { "type": "string" },
+        "roleTitle": { "type": "string" },
+        "location": { "type": "string" },
+        "timezone": { "type": "string" },
+        "customStatus": { "type": "string" },
+        "statusEmoji": { "type": "string" },
+        "availability": { "type": "string" },
+        "pronouns": { "type": "string" },
+        "skills": { "type": "array", "items": { "type": "string" } },
+        "links": { "type": "object" },
+        "isOnline": { "type": "boolean" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "name", "username"]
+    },
+    "posts": {
+      "title": "Post",
+      "description": "Creations, code snippets, and updates posted by users",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "authorId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "postType": { "type": "string" },
+        "communityId": { "type": "string" },
+        "likes": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "authorId", "title", "content"]
+    },
+    "events": {
+      "title": "Event",
+      "description": "Live sessions, voice rooms, competitions, and collaborative challenges with file uploads",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "communityId": { "type": "string" },
+        "communityName": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "type": { "type": "string" },
+        "startTime": { "type": "string" },
+        "status": { "type": "string" },
+        "participantsCount": { "type": "number" },
+        "submissionsCount": { "type": "number" },
+        "files": { "type": "array" }
+      },
+      "required": ["id", "title", "type"]
+    },
+    "event_submissions": {
+      "title": "Event Submission",
+      "description": "Participant work submissions to challenges and jams with code and files",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "eventId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "mediaType": { "type": "string" },
+        "files": { "type": "array" },
+        "votes": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "eventId", "title"]
+    }
+  },
+  "firestore": {
+    "indexes": []
+  }
+}

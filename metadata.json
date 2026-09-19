@@ -1,0 +1,7 @@
+{
+  "name": "Tsuna",
+  "description": "Social collaboration platform for artists, builders, coders, creators, and communities to connect, share work, and build together.",
+  "requestFramePermissions": ["microphone", "camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

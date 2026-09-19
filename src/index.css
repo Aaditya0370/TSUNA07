@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+@theme {
+  /* Soft, eye-safe dark theme palette (replaces harsh OLED pitch black & stark white glare) */
+  --color-black: #0e1015;
+  --color-neutral-950: #13161c;
+  --color-neutral-900: #191d25;
+  --color-neutral-800: #232833;
+  --color-neutral-700: #313745;
+  --color-neutral-600: #495264;
+  --color-neutral-500: #6f788b;
+  --color-neutral-400: #98a1b2;
+  --color-neutral-300: #c4c9d5;
+  --color-neutral-200: #dfe3ec;
+  --color-neutral-100: #eef1f6;
+  --color-white: #f3f5f8;
+
+  /* Softer, more pleasant accents that do not cause neon glare */
+  --color-emerald-400: #34d399;
+  --color-emerald-500: #10b981;
+  --color-amber-400: #fbbf24;
+  --color-violet-400: #a78bfa;
+  --color-sky-400: #38bdf8;
+}
+
+@layer base {
+  :root {
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #0e1015;
+    color: #f3f5f8;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Softened outline text for headers without glaring halos */
+  .hero-outline-text {
+    color: #0e1015;
+    -webkit-text-stroke: 1.5px rgba(243, 245, 248, 0.7);
+    text-shadow: 0 0 20px rgba(243, 245, 248, 0.08);
+  }
+
+  /* Softer, non-intrusive scrollbars */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0e1015;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #232833;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #313745;
+  }
+}
+
+/* Chat background textures with gentle, low-contrast patterns */
+.chat-bg-default {
+  background-color: #11141a;
+  background-image: radial-gradient(rgba(243, 245, 248, 0.035) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.chat-bg-obsidian {
+  background-color: #0e1015;
+  background-image: linear-gradient(180deg, #13161c 0%, #0e1015 100%);
+}
+
+.chat-bg-charcoal {
+  background-color: #13161c;
+  background-image: radial-gradient(#232833 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+.chat-bg-mono-grid {
+  background-color: #0e1015;
+  background-image: 
+    linear-gradient(to right, rgba(243, 245, 248, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(243, 245, 248, 0.025) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
