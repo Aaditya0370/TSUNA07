@@ -30,9 +30,16 @@ import {
   Copy,
   ChevronRight,
   Plus,
+  QrCode,
+  Edit3,
 } from 'lucide-react';
 import { api } from '../services/api';
 import { signInWithGoogle } from '../services/firebase';
+import { InteractiveCodePlayground } from '../components/InteractiveCodePlayground';
+import { CreatorShareCardModal } from '../components/CreatorShareCardModal';
+import { CreatorInquiryModal } from '../components/CreatorInquiryModal';
+import { CreatorEditProfileModal } from '../components/CreatorEditProfileModal';
+import { sounds } from '../utils/audio';
 
 interface CreatorLandingViewProps {
   handle: string;
@@ -76,6 +83,11 @@ export const CreatorLandingView: React.FC<CreatorLandingViewProps> = ({
 
   // Share link feedback
   const [copiedLandingLink, setCopiedLandingLink] = useState(false);
+
+  // Creator action modals
+  const [isShareCardOpen, setIsShareCardOpen] = useState(false);
+  const [isInquiryOpen, setIsInquiryOpen] = useState(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
 
   useEffect(() => {
     loadLandingData();
@@ -617,12 +629,26 @@ export const CreatorLandingView: React.FC<CreatorLandingViewProps> = ({
               </div>
             </div>
 
-            {/* Action Buttons: Follow, Message, Share */}
-            <div className="flex items-center space-x-2.5">
-              {!isDeviceOwner && (
+            {/* Action Buttons: Follow, Collaborate, Edit, QR Pass, Share */}
+            <div className="flex flex-wrap items-center gap-2">
+              {isDeviceOwner ? (
+                <button
+                  onClick={() => {
+                    sounds.playTap();
+                    setIsEditProfileOpen(true);
+                  }}
+                  className="flex items-center space-x-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 px-4 py-2 text-xs font-bold text-emerald-300 transition active:scale-95 shadow-sm"
+                >
+                  <Edit3 className="h-4 w-4 text-emerald-400" />
+                  <span>Edit Profile</span>
+                </button>
+              ) : (
                 <>
                   <button
-                    onClick={handleToggleFollow}
+                    onClick={() => {
+                      sounds.playLike();
+                      handleToggleFollow();
+                    }}
                     className={`flex items-center space-x-1.5 rounded-xl px-4 py-2 text-xs font-bold transition active:scale-95 shadow-md ${
                       profileUser?.isFollowing
                         ? 'border border-emerald-700/80 bg-emerald-950/40 text-emerald-300'
@@ -643,22 +669,60 @@ export const CreatorLandingView: React.FC<CreatorLandingViewProps> = ({
                   </button>
 
                   <button
-                    onClick={() => onNavigate('chat')}
+                    onClick={() => {
+                      sounds.playTap();
+                      setIsInquiryOpen(true);
+                    }}
+                    className="flex items-center space-x-1.5 rounded-xl border border-emerald-500/30 bg-emerald-950/40 hover:bg-emerald-900/50 px-3.5 py-2 text-xs font-semibold text-emerald-300 transition active:scale-95"
+                  >
+                    <Sparkles className="h-4 w-4 text-emerald-400" />
+                    <span>Collaborate</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      sounds.playTap();
+                      onNavigate('chat');
+                    }}
                     className="flex items-center space-x-1.5 rounded-xl border border-neutral-800 bg-neutral-900 hover:bg-neutral-800 px-3.5 py-2 text-xs font-semibold text-neutral-200 transition active:scale-95"
                   >
-                    <MessageSquare className="h-4 w-4 text-emerald-400" />
+                    <MessageSquare className="h-4 w-4 text-neutral-400" />
                     <span>Message</span>
                   </button>
                 </>
               )}
 
               <button
-                onClick={handleCopyLandingLink}
-                className="flex items-center space-x-1.5 rounded-xl border border-neutral-800 bg-neutral-900 hover:bg-neutral-800 px-3.5 py-2 text-xs font-semibold text-neutral-200 transition active:scale-95"
+                onClick={() => {
+                  sounds.playTap();
+                  setIsShareCardOpen(true);
+                }}
+                className="flex items-center space-x-1.5 rounded-xl border border-neutral-800 bg-neutral-900 hover:bg-neutral-800 px-3 py-2 text-xs font-semibold text-neutral-200 transition active:scale-95"
+                title="View Creator Pass & QR Code"
+              >
+                <QrCode className="h-4 w-4 text-emerald-400" />
+                <span>QR Pass</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  sounds.playTap();
+                  handleCopyLandingLink();
+                }}
+                className="flex items-center space-x-1.5 rounded-xl border border-neutral-800 bg-neutral-900 hover:bg-neutral-800 px-3 py-2 text-xs font-semibold text-neutral-200 transition active:scale-95"
                 title="Copy Creator Landing Link"
               >
-                <Share2 className="h-4 w-4 text-neutral-400" />
-                <span>Share</span>
+                {copiedLandingLink ? (
+                  <>
+                    <Check className="h-4 w-4 text-emerald-400" />
+                    <span className="text-emerald-400">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="h-4 w-4 text-neutral-400" />
+                    <span>Share</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -767,7 +831,34 @@ export const CreatorLandingView: React.FC<CreatorLandingViewProps> = ({
 
         {/* Tab 1: Works & Code */}
         {activeTab === 'works' && (
-          <div className="space-y-4">
+          <div className="space-y-6">
+            {/* Interactive Real-Time Code & Simulation Stage */}
+            <InteractiveCodePlayground
+              title={`${profileUser?.name || 'Creator'}'s Real-Time Shader Pipeline`}
+              creatorName={profileUser?.name}
+              initialLanguage="wgsl"
+              initialCode={`// WebGPU / Real-time Particle Simulation Pipeline
+// Ping-pong compute buffer for @${profileUser?.username || 'creator'}
+const PARTICLE_COUNT = 2000;
+const SIMULATION_SPEED = 1.2;
+
+@group(0) @binding(0) var<storage, read> currentParticles : array<Particle>;
+@group(0) @binding(1) var<storage, read_write> nextParticles : array<Particle>;
+
+@compute @workgroup_size(64)
+fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
+  let index = GlobalInvocationID.x;
+  if (index >= u32(PARTICLE_COUNT)) { return; }
+  
+  var p = currentParticles[index];
+  // Dynamic curl noise field calculation
+  let force = curlNoise(p.pos.xy * 0.005);
+  p.vel += force * 0.08;
+  p.pos += p.vel;
+  nextParticles[index] = p;
+}`}
+            />
+
             {posts.length === 0 ? (
               <div className="rounded-2xl border border-neutral-900 bg-neutral-950 p-12 text-center text-neutral-400">
                 <Code2 className="h-8 w-8 mx-auto mb-2 text-neutral-600" />
@@ -984,6 +1075,36 @@ export const CreatorLandingView: React.FC<CreatorLandingViewProps> = ({
 
       {/* Auth verification modal */}
       {renderAuthModal()}
+
+      {/* Creator Pass & QR Modal */}
+      {isShareCardOpen && profileUser && (
+        <CreatorShareCardModal
+          user={profileUser}
+          onClose={() => setIsShareCardOpen(false)}
+        />
+      )}
+
+      {/* Creator Collaboration / Inquiry Modal */}
+      {isInquiryOpen && profileUser && (
+        <CreatorInquiryModal
+          targetUser={profileUser}
+          currentUser={currentUser}
+          onClose={() => setIsInquiryOpen(false)}
+          onNavigate={onNavigate}
+        />
+      )}
+
+      {/* Creator Profile Edit Modal */}
+      {isEditProfileOpen && profileUser && (
+        <CreatorEditProfileModal
+          user={profileUser}
+          onClose={() => setIsEditProfileOpen(false)}
+          onSaved={(updated) => {
+            setProfileUser(updated);
+            onCurrentUserUpdated(updated);
+          }}
+        />
+      )}
     </div>
   );
 };

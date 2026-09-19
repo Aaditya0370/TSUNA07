@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { CommunityQuestion, QuestionAnswer, User } from '../types';
 import { api } from '../services/api';
+import { sounds } from '../utils/audio';
 
 interface CommunityQuestionsSectionProps {
   communityId: string;
@@ -110,6 +111,7 @@ export const CommunityQuestionsSection: React.FC<CommunityQuestionsSectionProps>
 
       setQuestions((prev) => [created, ...prev]);
       onQuestionsCountChange?.(questions.length + 1);
+      sounds.playSuccess();
       // Auto expand the newly created question
       setExpandedQuestions((prev) => ({ ...prev, [created.id]: true }));
       setQuestionDetails((prev) => ({ ...prev, [created.id]: created }));
@@ -161,6 +163,7 @@ export const CommunityQuestionsSection: React.FC<CommunityQuestionsSectionProps>
 
       // Clear input
       setAnswerTexts((prev) => ({ ...prev, [questionId]: '' }));
+      sounds.playMessageSent();
     } catch (err) {
       console.error('Failed to submit answer:', err);
     } finally {
@@ -170,6 +173,7 @@ export const CommunityQuestionsSection: React.FC<CommunityQuestionsSectionProps>
 
   const handleUpvoteQuestion = async (questionId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    sounds.playLike();
     try {
       const updated = await api.toggleUpvoteQuestion(questionId);
       setQuestions((prev) => prev.map((q) => (q.id === questionId ? updated : q)));
@@ -182,6 +186,7 @@ export const CommunityQuestionsSection: React.FC<CommunityQuestionsSectionProps>
   };
 
   const handleUpvoteAnswer = async (questionId: string, answerId: string) => {
+    sounds.playLike();
     try {
       const updatedAnswer = await api.toggleUpvoteAnswer(questionId, answerId);
       setQuestionDetails((prev) => {
@@ -202,6 +207,7 @@ export const CommunityQuestionsSection: React.FC<CommunityQuestionsSectionProps>
 
   const handleToggleResolve = async (questionId: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    sounds.playSuccess();
     try {
       const updated = await api.toggleResolveQuestion(questionId);
       setQuestions((prev) => prev.map((q) => (q.id === questionId ? updated : q)));
