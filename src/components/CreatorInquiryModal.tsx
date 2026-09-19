@@ -50,7 +50,7 @@ export const CreatorInquiryModal: React.FC<CreatorInquiryModalProps> = ({
         await api.sendMessage(conv.id, { text: inquiryBody });
       } else {
         // Broadcast share
-        await api.shareToTarget({
+        await api.shareItem({
           targetType: 'chat',
           targetId: conversations[0]?.id || 'conv_1',
           itemType: 'post',

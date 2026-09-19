@@ -323,6 +323,17 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+  shareToTarget: (payload: {
+    targetType: 'chat' | 'community';
+    targetId: string;
+    itemType: string;
+    itemData: any;
+    message?: string;
+  }) =>
+    fetchJSON<{ success: boolean; message: string }>('/api/share', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 
   // Search
   searchAll: (query: string, type: string = 'all') => {

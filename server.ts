@@ -27,7 +27,7 @@ async function startServer() {
   });
 
   // Brevo API Configuration & In-Memory OTP Store
-  const BREVO_API_KEY = process.env.BREVO_API_KEY || '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';
+  const BREVO_API_KEY = process.env.BREVO_API_KEY || '';
   const BREVO_SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL || 'adigamerz1277@gmail.com';
   const BREVO_SENDER_NAME = 'Tsuna Platform';
 
@@ -75,6 +75,15 @@ async function startServer() {
       });
 
       console.log(`[Brevo OTP] Generated OTP for ${normalizedEmail}: ${code} (Expires in 10m)`);
+
+      if (!BREVO_API_KEY) {
+        console.warn(`[Brevo OTP] BREVO_API_KEY not set. Using dev preview OTP for ${normalizedEmail}: ${code}`);
+        return res.json({
+          success: true,
+          message: `A 6-digit verification code was prepared for ${normalizedEmail}. (Development code: ${code})`,
+          codePreview: code,
+        });
+      }
 
       // Brevo Transactional Email Payload
       const emailBody = {
